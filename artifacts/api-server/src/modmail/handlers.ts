@@ -35,6 +35,24 @@ import { logger } from "../lib/logger.js";
 
 const STAFF_SERVER_ID = process.env["STAFF_SERVER_ID"]!;
 
+const STAFF_ROLES: { id: string; label: string }[] = [
+  { id: "1519938887416545282", label: "Ownership" },
+  { id: "1519939477303197878", label: "Bored of Directors" },
+  { id: "1519940064254361660", label: "Management" },
+];
+
+async function getStaffRoleLabel(client: Client, userId: string): Promise<string> {
+  try {
+    const staffGuild = await getStaffGuild(client);
+    if (!staffGuild) return "Staff Team";
+    const member = await staffGuild.members.fetch(userId);
+    for (const role of STAFF_ROLES) {
+      if (member.roles.cache.has(role.id)) return role.label;
+    }
+  } catch { /**/ }
+  return "Staff Team";
+}
+
 function threadId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -259,13 +277,15 @@ export async function handleReply(message: Message, anonymous: boolean) {
     return;
   }
 
+  const roleLabel = anonymous ? await getStaffRoleLabel(client, message.author.id) : null;
+
   const embed = new EmbedBuilder()
     .setDescription(content)
     .setColor(anonymous ? Colors.Grey : Colors.Green)
     .setTimestamp();
 
   if (anonymous) {
-    embed.setAuthor({ name: "Staff Team" });
+    embed.setAuthor({ name: roleLabel! });
   } else {
     embed.setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL() });
   }
@@ -274,8 +294,10 @@ export async function handleReply(message: Message, anonymous: boolean) {
     await user.send({ embeds: [embed] });
     await message.react("✅").catch(() => {});
 
+    const senderLabel = anonymous ? `${roleLabel} (anon)` : message.author.tag;
     const logEmbed = new EmbedBuilder()
-      .setDescription(`**${anonymous ? "Anonymous" : message.author.tag}** → User: ${content}`)
+      .setAuthor({ name: senderLabel, iconURL: anonymous ? undefined : message.author.displayAvatarURL() })
+      .setDescription(`→ **User:** ${content}`)
       .setColor(anonymous ? Colors.Grey : Colors.Green)
       .setTimestamp();
     await (message.channel as TextChannel).send({ embeds: [logEmbed] });
