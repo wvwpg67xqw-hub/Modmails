@@ -31,21 +31,23 @@ export function startBot() {
     partials: [Partials.Channel, Partials.Message],
   });
 
-  client.once("ready", async () => {
+  client.once("clientReady", async () => {
     logger.info({ tag: client.user?.tag }, "Modmail bot ready");
+    logger.info({ guilds: client.guilds.cache.map(g => `${g.name}:${g.id}`) }, "Guilds in cache");
+
+    await client.guilds.fetch();
 
     const staffGuild = client.guilds.cache.get(STAFF_SERVER_ID);
     if (staffGuild) {
-      await ensureCategories(staffGuild);
-      logger.info("Categories ensured on staff server");
-    } else {
-      logger.warn("Staff guild not found in cache — fetch guilds first");
       try {
-        const g = await client.guilds.fetch(STAFF_SERVER_ID);
-        await ensureCategories(g);
+        await staffGuild.fetch();
+        await ensureCategories(staffGuild);
+        logger.info("Categories ensured on staff server");
       } catch (err) {
-        logger.error({ err }, "Could not fetch staff guild");
+        logger.error({ err }, "Failed to ensure categories");
       }
+    } else {
+      logger.error({ STAFF_SERVER_ID, available: client.guilds.cache.map(g => g.id) }, "Staff guild not found in cache after fetch");
     }
   });
 
