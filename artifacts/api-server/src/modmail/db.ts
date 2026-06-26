@@ -20,9 +20,16 @@ interface Snippet {
   content: string;
 }
 
+interface PendingSelection {
+  menuMessageId: string;
+  initialMessage: string;
+  createdAt: number;
+}
+
 interface DB {
   threads: Record<string, Thread>;
   snippets: Record<string, Snippet>;
+  pending: Record<string, PendingSelection>;
 }
 
 function ensureDir() {
@@ -31,13 +38,13 @@ function ensureDir() {
 
 function load(): DB {
   ensureDir();
-  if (!fs.existsSync(DB_FILE)) {
-    return { threads: {}, snippets: {} };
-  }
+  if (!fs.existsSync(DB_FILE)) return { threads: {}, snippets: {}, pending: {} };
   try {
-    return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
+    const raw = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")) as DB;
+    if (!raw.pending) raw.pending = {};
+    return raw;
   } catch {
-    return { threads: {}, snippets: {} };
+    return { threads: {}, snippets: {}, pending: {} };
   }
 }
 
@@ -45,6 +52,8 @@ function save(db: DB) {
   ensureDir();
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 }
+
+// ── Threads ───────────────────────────────────────────────────────────────────
 
 export function getThreadByChannel(channelId: string): Thread | null {
   const db = load();
@@ -83,11 +92,6 @@ export function closeThread(threadId: string) {
   }
 }
 
-export function getAllOpenThreads(): Thread[] {
-  const db = load();
-  return Object.values(db.threads).filter((t) => t.open);
-}
-
 export function addSubscriber(channelId: string, userId: string) {
   const db = load();
   const thread = Object.values(db.threads).find((t) => t.channelId === channelId);
@@ -105,6 +109,27 @@ export function removeSubscriber(channelId: string, userId: string) {
     save(db);
   }
 }
+
+// ── Pending selections ────────────────────────────────────────────────────────
+
+export function setPending(userId: string, menuMessageId: string, initialMessage: string) {
+  const db = load();
+  db.pending[userId] = { menuMessageId, initialMessage, createdAt: Date.now() };
+  save(db);
+}
+
+export function getPending(userId: string): PendingSelection | null {
+  const db = load();
+  return db.pending[userId] ?? null;
+}
+
+export function clearPending(userId: string) {
+  const db = load();
+  delete db.pending[userId];
+  save(db);
+}
+
+// ── Snippets ──────────────────────────────────────────────────────────────────
 
 export function getSnippet(name: string): Snippet | null {
   const db = load();

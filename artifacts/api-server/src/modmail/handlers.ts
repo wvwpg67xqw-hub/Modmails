@@ -6,7 +6,12 @@ import {
   EmbedBuilder,
   Colors,
   Guild,
-  PermissionFlagsBits,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
 } from "discord.js";
 import {
   getThreadByUser,
@@ -20,8 +25,11 @@ import {
   addSnippet,
   removeSnippet,
   listSnippets,
+  setPending,
+  getPending,
+  clearPending,
 } from "./db.js";
-import { CATEGORIES } from "./categories.js";
+import { CATEGORIES, MENU_OPTIONS } from "./categories.js";
 import { ensureCategories } from "./setup.js";
 import { logger } from "../lib/logger.js";
 
@@ -31,9 +39,9 @@ function threadId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function getStaffGuild(client: Client): Promise<Guild | null> {
+export async function getStaffGuild(client: Client): Promise<Guild | null> {
   try {
-    return await client.guilds.fetch(STAFF_SERVER_ID);
+    return client.guilds.cache.get(STAFF_SERVER_ID) ?? await client.guilds.fetch(STAFF_SERVER_ID);
   } catch {
     return null;
   }
@@ -44,14 +52,74 @@ async function getCategoryId(guild: Guild, catName: string): Promise<string | nu
   return cats[catName] ?? null;
 }
 
+export async function openThread(
+  client: Client,
+  userId: string,
+  username: string,
+  avatarURL: string,
+  category: string,
+  initialMessage: string,
+) {
+  const staffGuild = await getStaffGuild(client);
+  if (!staffGuild) return null;
+
+  const catId = await getCategoryId(staffGuild, category);
+
+  const safeName = username.replace(/[^a-z0-9-]/gi, "").toLowerCase().slice(0, 20) || "user";
+  const prefix = Object.entries(CATEGORIES).find(([, v]) => v === category)?.[0]?.toLowerCase() ?? "modmail";
+
+  const channel = await staffGuild.channels.create({
+    name: `${prefix}-${safeName}`,
+    type: ChannelType.GuildText,
+    parent: catId ?? undefined,
+    topic: `[${category}] Thread for ${username} (${userId})`,
+  });
+
+  const tid = threadId();
+  createThread({
+    threadId: tid,
+    channelId: channel.id,
+    userId,
+    username,
+    open: true,
+    category,
+    createdAt: Date.now(),
+    subscribers: [],
+  });
+
+  const openEmbed = new EmbedBuilder()
+    .setTitle(`New ${category} Thread`)
+    .setDescription(`Thread opened by **${username}** (${userId})`)
+    .setColor(Colors.Green)
+    .setTimestamp()
+    .addFields(
+      { name: "User ID", value: userId, inline: true },
+      { name: "Category", value: category, inline: true },
+    );
+
+  await channel.send({ embeds: [openEmbed] });
+
+  if (initialMessage) {
+    const msgEmbed = new EmbedBuilder()
+      .setAuthor({ name: username, iconURL: avatarURL })
+      .setDescription(initialMessage)
+      .setColor(Colors.Blue)
+      .setTimestamp();
+    await channel.send({ embeds: [msgEmbed] });
+  }
+
+  return channel;
+}
+
 export async function handleUserDM(client: Client, message: Message) {
   if (message.author.bot) return;
 
   const existingThread = getThreadByUser(message.author.id);
-  const staffGuild = await getStaffGuild(client);
-  if (!staffGuild) return;
 
   if (existingThread) {
+    const staffGuild = await getStaffGuild(client);
+    if (!staffGuild) return;
+
     const channel = staffGuild.channels.cache.get(existingThread.channelId) as TextChannel | undefined;
     if (!channel) return;
 
@@ -63,8 +131,7 @@ export async function handleUserDM(client: Client, message: Message) {
       .setFooter({ text: `User ID: ${message.author.id}` });
 
     if (message.attachments.size > 0) {
-      const urls = message.attachments.map((a) => a.url).join("\n");
-      embed.addFields({ name: "Attachments", value: urls });
+      embed.addFields({ name: "Attachments", value: message.attachments.map((a) => a.url).join("\n") });
     }
 
     await channel.send({ embeds: [embed] });
@@ -75,59 +142,99 @@ export async function handleUserDM(client: Client, message: Message) {
     }
 
     await message.react("✅").catch(() => {});
-  } else {
-    const catId = await getCategoryId(staffGuild, CATEGORIES.MODMAIL);
-    const channel = await staffGuild.channels.create({
-      name: `modmail-${message.author.username}`,
-      type: ChannelType.GuildText,
-      parent: catId ?? undefined,
-      topic: `Modmail thread for ${message.author.tag} (${message.author.id})`,
-    });
+    return;
+  }
 
-    const tid = threadId();
-    createThread({
-      threadId: tid,
-      channelId: channel.id,
-      userId: message.author.id,
-      username: message.author.tag,
-      open: true,
-      category: CATEGORIES.MODMAIL,
-      createdAt: Date.now(),
-      subscribers: [],
-    });
-
-    const openEmbed = new EmbedBuilder()
-      .setTitle("New Modmail Thread")
-      .setDescription(`Thread opened by **${message.author.tag}** (${message.author.id})`)
-      .setColor(Colors.Green)
-      .setTimestamp()
-      .addFields({ name: "User ID", value: message.author.id, inline: true });
-
-    await channel.send({ embeds: [openEmbed] });
-
-    const msgEmbed = new EmbedBuilder()
-      .setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL() })
-      .setDescription(message.content || "*[no text content]*")
-      .setColor(Colors.Blue)
-      .setTimestamp();
-
-    if (message.attachments.size > 0) {
-      const urls = message.attachments.map((a) => a.url).join("\n");
-      msgEmbed.addFields({ name: "Attachments", value: urls });
-    }
-
-    await channel.send({ embeds: [msgEmbed] });
-    await message.react("✅").catch(() => {});
-
-    await message.author.send({
+  const pending = getPending(message.author.id);
+  if (pending) {
+    await message.reply({
       embeds: [
         new EmbedBuilder()
-          .setTitle("Modmail Thread Opened")
-          .setDescription("Thanks for reaching out! Our staff team will get back to you shortly.")
-          .setColor(Colors.Green),
+          .setDescription("Please select a category from the menu above before sending a message.")
+          .setColor(Colors.Yellow),
       ],
     }).catch(() => {});
+    return;
   }
+
+  const select = new StringSelectMenuBuilder()
+    .setCustomId("modmail_category")
+    .setPlaceholder("Choose what you need help with…")
+    .addOptions(
+      MENU_OPTIONS.map((opt) => ({
+        label: opt.label,
+        description: opt.description,
+        value: opt.value,
+        emoji: opt.emoji,
+      }))
+    );
+
+  const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+
+  const menuMsg = await message.author.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("Welcome to Modmail")
+        .setDescription(
+          "Please select the reason you're contacting us from the menu below.\n\n" +
+          MENU_OPTIONS.map((o) => `${o.emoji} **${o.label}** — ${o.description}`).join("\n")
+        )
+        .setColor(Colors.Blurple)
+        .setFooter({ text: "Select an option to open your thread" }),
+    ],
+    components: [row],
+  }).catch(() => null);
+
+  if (!menuMsg) return;
+
+  setPending(message.author.id, menuMsg.id, message.content);
+}
+
+export async function handleCategorySelection(
+  client: Client,
+  interaction: StringSelectMenuInteraction,
+) {
+  const userId = interaction.user.id;
+  const chosen = interaction.values[0] as string;
+  const pending = getPending(userId);
+
+  await interaction.deferUpdate().catch(() => {});
+
+  const disabledSelect = new StringSelectMenuBuilder()
+    .setCustomId("modmail_category_done")
+    .setPlaceholder(`Selected: ${chosen}`)
+    .setDisabled(true)
+    .addOptions(MENU_OPTIONS.map((opt) => ({ label: opt.label, value: opt.value, emoji: opt.emoji })));
+
+  await interaction.message.edit({ components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(disabledSelect)] }).catch(() => {});
+
+  clearPending(userId);
+
+  const channel = await openThread(
+    client,
+    userId,
+    interaction.user.tag,
+    interaction.user.displayAvatarURL(),
+    chosen,
+    pending?.initialMessage ?? "",
+  );
+
+  if (!channel) {
+    await interaction.user.send("❌ Something went wrong opening your thread. Please try again.").catch(() => {});
+    return;
+  }
+
+  const option = MENU_OPTIONS.find((o) => o.value === chosen);
+
+  await interaction.user.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle(`${option?.emoji ?? ""} Thread Opened — ${chosen}`)
+        .setDescription("Your thread has been opened! Our staff team will get back to you shortly.\n\nYou can continue sending messages here and they'll be forwarded to staff.")
+        .setColor(Colors.Green)
+        .setTimestamp(),
+    ],
+  }).catch(() => {});
 }
 
 export async function handleReply(message: Message, anonymous: boolean) {
@@ -160,10 +267,7 @@ export async function handleReply(message: Message, anonymous: boolean) {
   if (anonymous) {
     embed.setAuthor({ name: "Staff Team" });
   } else {
-    embed.setAuthor({
-      name: message.author.tag,
-      iconURL: message.author.displayAvatarURL(),
-    });
+    embed.setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL() });
   }
 
   try {
@@ -188,9 +292,8 @@ export async function handleClose(message: Message) {
     return;
   }
 
-  const client = message.client;
   try {
-    const user = await client.users.fetch(thread.userId);
+    const user = await message.client.users.fetch(thread.userId);
     await user.send({
       embeds: [
         new EmbedBuilder()
@@ -239,27 +342,18 @@ export async function handleMove(message: Message) {
     return;
   }
 
-  const parts = message.content.split(/\s+/);
-  const target = parts.slice(1).join(" ").trim();
-
+  const target = message.content.replace(/^\.move\s*/i, "").trim();
   if (!target) {
-    await message.reply(
-      `❌ Please specify a category. Available: ${Object.values(CATEGORIES).join(", ")}`
-    );
+    await message.reply(`❌ Usage: \`.move <category>\`. Available: ${Object.values(CATEGORIES).join(", ")}`);
     return;
   }
 
   const staffGuild = await getStaffGuild(message.client);
   if (!staffGuild) return;
 
-  const catMatch = Object.values(CATEGORIES).find(
-    (c) => c.toLowerCase() === target.toLowerCase()
-  );
-
+  const catMatch = Object.values(CATEGORIES).find((c) => c.toLowerCase() === target.toLowerCase());
   if (!catMatch) {
-    await message.reply(
-      `❌ Unknown category \`${target}\`. Available: ${Object.values(CATEGORIES).join(", ")}`
-    );
+    await message.reply(`❌ Unknown category \`${target}\`. Available: ${Object.values(CATEGORIES).join(", ")}`);
     return;
   }
 
@@ -295,11 +389,7 @@ export async function handleSnippetRemove(message: Message) {
     return;
   }
   const removed = removeSnippet(name);
-  if (removed) {
-    await message.reply(`✅ Snippet \`${name}\` removed.`);
-  } else {
-    await message.reply(`❌ No snippet named \`${name}\`.`);
-  }
+  await message.reply(removed ? `✅ Snippet \`${name}\` removed.` : `❌ No snippet named \`${name}\`.`);
 }
 
 export async function handleSnippetList(message: Message) {
@@ -328,10 +418,9 @@ export async function handleSnippetUse(message: Message, snippetName: string) {
     return;
   }
 
-  const client = message.client;
   let user;
   try {
-    user = await client.users.fetch(thread.userId);
+    user = await message.client.users.fetch(thread.userId);
   } catch {
     await message.reply("❌ Could not fetch the user.");
     return;
@@ -357,45 +446,18 @@ export async function handleSnippetUse(message: Message, snippetName: string) {
 export async function handleHelp(message: Message) {
   const snippets = listSnippets();
   const snippetLines = snippets.length > 0
-    ? snippets.map((s) => `\`.<snippetname>\` → **.${s.name}** — sends snippet to user`).join("\n")
+    ? snippets.map((s) => `**.${s.name}** — ${s.content}`).join("\n")
     : "*No snippets saved yet.*";
 
   const embed = new EmbedBuilder()
     .setTitle("Modmail Commands")
     .setColor(Colors.Blurple)
     .addFields(
-      {
-        name: "📬 Replying",
-        value: [
-          "`.r <message>` — Reply to user",
-          "`.ar <message>` — Anonymous reply to user",
-        ].join("\n"),
-      },
-      {
-        name: "🔧 Thread Management",
-        value: [
-          "`.close` — Close the thread (notifies user)",
-          "`.sub` — Subscribe/unsubscribe to be pinged on new user replies",
-          "`.move <category>` — Move to a category (Modmail, Partnerships, Appeals, Ping on Join)",
-        ].join("\n"),
-      },
-      {
-        name: "📝 Snippets",
-        value: [
-          "`.snippet add <name> <content>` — Create a snippet",
-          "`.snippet remove <name>` — Delete a snippet",
-          "`.snippet list` — List all snippets",
-          "**Using a snippet:** `.<name>` — Sends the snippet to the user",
-        ].join("\n"),
-      },
-      {
-        name: "📋 Saved Snippets",
-        value: snippetLines,
-      },
-      {
-        name: "ℹ️ Categories",
-        value: Object.values(CATEGORIES).join(", "),
-      }
+      { name: "📬 Replying", value: "`.r <message>` — Reply to user\n`.ar <message>` — Anonymous reply" },
+      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread" },
+      { name: "📝 Snippets", value: "`.snippet add <name> <text>` — Create\n`.snippet remove <name>` — Delete\n`.snippet list` — List all\n`.<name>` — Send snippet to user" },
+      { name: "📋 Saved Snippets", value: snippetLines },
+      { name: "ℹ️ Categories", value: Object.values(CATEGORIES).join(", ") },
     )
     .setFooter({ text: "Modmail Bot" });
 
