@@ -23,6 +23,9 @@ import {
   handleEscalate,
   handleBlock,
   handleUnblock,
+  handleMenuEdit,
+  handleMenuEditSelection,
+  handleMenuEditModalSubmit,
   getStaffGuild,
 } from "./handlers.js";
 import { getSnippet } from "./db.js";
@@ -67,11 +70,19 @@ export function startBot() {
     }
   });
 
-  // ── Select menu interactions (category picker in DMs) ─────────────────────
+  // ── Interactions (select menus + modals) ──────────────────────────────────
   client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isStringSelectMenu()) return;
-    if (interaction.customId !== "modmail_category") return;
-    await handleCategorySelection(client, interaction as StringSelectMenuInteraction);
+    if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === "modmail_category") {
+        await handleCategorySelection(client, interaction as StringSelectMenuInteraction);
+      } else if (interaction.customId === "menu_edit_select") {
+        await handleMenuEditSelection(interaction as StringSelectMenuInteraction);
+      }
+    } else if (interaction.isModalSubmit()) {
+      if (interaction.customId.startsWith("menu_edit_modal_")) {
+        await handleMenuEditModalSubmit(interaction);
+      }
+    }
   });
 
   // ── Messages ───────────────────────────────────────────────────────────────
@@ -103,6 +114,7 @@ export function startBot() {
     if (lower === ".block")                    { await handleBlock(message);         return; }
     if (lower.startsWith(".unblock"))          { await handleUnblock(message);       return; }
     if (lower === ".escalate")                 { await handleEscalate(message);      return; }
+    if (lower === ".menu edit")                { await handleMenuEdit(message);      return; }
     if (lower === ".a" || lower === ".help")   { await handleHelp(message);          return; }
 
     // Snippet shortcut: .snippetname
@@ -112,35 +124,6 @@ export function startBot() {
         await handleSnippetUse(message, snippetName);
         return;
       }
-    }
-  });
-
-  // ── Ping on Join ───────────────────────────────────────────────────────────
-  client.on("guildMemberAdd", async (member) => {
-    if (member.guild.id !== MAIN_SERVER_ID) return;
-    try {
-      const staffGuild = await client.guilds.fetch(STAFF_SERVER_ID);
-      const cats = await ensureCategories(staffGuild);
-      const pojCatId = cats["Ping on Join"];
-
-      let channel = staffGuild.channels.cache.find(
-        (c) => c.parentId === pojCatId && c.type === ChannelType.GuildText
-      );
-
-      if (!channel) {
-        channel = await staffGuild.channels.create({
-          name: "join-pings",
-          type: ChannelType.GuildText,
-          parent: pojCatId ?? undefined,
-          topic: "Ping on Join notifications",
-        });
-      }
-
-      if (channel.isTextBased()) {
-        await channel.send(`📥 **${member.user.tag}** (\`${member.user.id}\`) just joined the server!`);
-      }
-    } catch (err) {
-      logger.error({ err }, "POJ ping failed");
     }
   });
 

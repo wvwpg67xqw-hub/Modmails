@@ -12,6 +12,10 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ComponentType,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ModalSubmitInteraction,
 } from "discord.js";
 import {
   getThreadByUser,
@@ -31,8 +35,10 @@ import {
   isBlocked,
   blockUser,
   unblockUser,
+  getMenuOptions,
+  updateMenuOption,
 } from "./db.js";
-import { CATEGORIES, MENU_OPTIONS } from "./categories.js";
+import { CATEGORIES } from "./categories.js";
 import { ensureCategories } from "./setup.js";
 import { logger } from "../lib/logger.js";
 
@@ -80,11 +86,12 @@ export async function openThread(
   avatarURL: string,
   category: string,
   initialMessage: string,
+  overrideCategoryId?: string | null,
 ) {
   const staffGuild = await getStaffGuild(client);
   if (!staffGuild) return null;
 
-  const catId = await getCategoryId(staffGuild, category);
+  const catId = overrideCategoryId ?? await getCategoryId(staffGuild, category);
 
   const safeName = username.replace(/[^a-z0-9-]/gi, "").toLowerCase().slice(0, 20) || "user";
   const prefix = Object.entries(CATEGORIES).find(([, v]) => v === category)?.[0]?.toLowerCase() ?? "modmail";
@@ -180,11 +187,13 @@ export async function handleUserDM(client: Client, message: Message) {
     return;
   }
 
+  const menuOpts = getMenuOptions();
+
   const select = new StringSelectMenuBuilder()
     .setCustomId("modmail_category")
     .setPlaceholder("Choose what you need help with…")
     .addOptions(
-      MENU_OPTIONS.map((opt) => ({
+      menuOpts.map((opt) => ({
         label: opt.label,
         description: opt.description,
         value: opt.value,
@@ -200,7 +209,7 @@ export async function handleUserDM(client: Client, message: Message) {
         .setTitle("Welcome to Modmail")
         .setDescription(
           "Please select the reason you're contacting us from the menu below.\n\n" +
-          MENU_OPTIONS.map((o) => `${o.emoji} **${o.label}** — ${o.description}`).join("\n")
+          menuOpts.map((o) => `${o.emoji} **${o.label}** — ${o.description}`).join("\n")
         )
         .setColor(Colors.Blurple)
         .setFooter({ text: "Select an option to open your thread" }),
@@ -223,15 +232,18 @@ export async function handleCategorySelection(
 
   await interaction.deferUpdate().catch(() => {});
 
+  const allOpts = getMenuOptions();
   const disabledSelect = new StringSelectMenuBuilder()
     .setCustomId("modmail_category_done")
     .setPlaceholder(`Selected: ${chosen}`)
     .setDisabled(true)
-    .addOptions(MENU_OPTIONS.map((opt) => ({ label: opt.label, value: opt.value, emoji: opt.emoji })));
+    .addOptions(allOpts.map((opt) => ({ label: opt.label, value: opt.value, emoji: opt.emoji })));
 
   await interaction.message.edit({ components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(disabledSelect)] }).catch(() => {});
 
   clearPending(userId);
+
+  const chosenOption = allOpts.find((o) => o.value === chosen);
 
   const channel = await openThread(
     client,
@@ -240,6 +252,7 @@ export async function handleCategorySelection(
     interaction.user.displayAvatarURL(),
     chosen,
     pending?.initialMessage ?? "",
+    chosenOption?.categoryId,
   );
 
   if (!channel) {
@@ -247,7 +260,7 @@ export async function handleCategorySelection(
     return;
   }
 
-  const option = MENU_OPTIONS.find((o) => o.value === chosen);
+  const option = chosenOption;
 
   await interaction.user.send({
     embeds: [
@@ -378,9 +391,22 @@ export async function handleMove(message: Message) {
   const staffGuild = await getStaffGuild(message.client);
   if (!staffGuild) return;
 
+  // Accept a raw Discord category/channel ID (snowflake) directly
+  const isSnowflake = /^\d{17,20}$/.test(target);
+  if (isSnowflake) {
+    try {
+      await (message.channel as TextChannel).setParent(target, { lockPermissions: false });
+      updateThread(thread.threadId, { category: `Channel ${target}` });
+      await message.reply(`✅ Moved to category \`${target}\``);
+    } catch {
+      await message.reply("❌ Could not move to that channel ID. Make sure it's a valid category ID on this server.");
+    }
+    return;
+  }
+
   const catMatch = Object.values(CATEGORIES).find((c) => c.toLowerCase() === target.toLowerCase());
   if (!catMatch) {
-    await message.reply(`❌ Unknown category \`${target}\`. Available: ${Object.values(CATEGORIES).join(", ")}`);
+    await message.reply(`❌ Unknown category \`${target}\`. Available: ${Object.values(CATEGORIES).join(", ")} or a raw category channel ID`);
     return;
   }
 
@@ -468,6 +494,79 @@ export async function handleSnippetUse(message: Message, snippetName: string) {
     .setTimestamp();
   await (message.channel as TextChannel).send({ embeds: [logEmbed] });
   await message.delete().catch(() => {});
+}
+
+export async function handleMenuEdit(message: Message) {
+  const opts = getMenuOptions();
+  const select = new StringSelectMenuBuilder()
+    .setCustomId("menu_edit_select")
+    .setPlaceholder("Choose an option to edit…")
+    .addOptions(opts.map((o) => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description })));
+
+  await message.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("🛠️ Edit Menu")
+        .setDescription("Select which menu option you want to edit. You can change the label, description, emoji, and the Discord category channel ID where threads go.")
+        .setColor(Colors.Blurple),
+    ],
+    components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)],
+  });
+}
+
+export async function handleMenuEditSelection(interaction: StringSelectMenuInteraction) {
+  const value = interaction.values[0]!;
+  const opts = getMenuOptions();
+  const opt = opts.find((o) => o.value === value);
+  if (!opt) { await interaction.reply({ content: "❌ Option not found.", ephemeral: true }); return; }
+
+  const modal = new ModalBuilder()
+    .setCustomId(`menu_edit_modal_${value}`)
+    .setTitle(`Edit: ${opt.label}`);
+
+  modal.addComponents(
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder().setCustomId("label").setLabel("Label (shown to users)").setStyle(TextInputStyle.Short).setValue(opt.label).setRequired(true).setMaxLength(100),
+    ),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder().setCustomId("description").setLabel("Description (shown under label)").setStyle(TextInputStyle.Short).setValue(opt.description).setRequired(true).setMaxLength(100),
+    ),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder().setCustomId("emoji").setLabel("Emoji (e.g. 📬 or :envelope:)").setStyle(TextInputStyle.Short).setValue(opt.emoji).setRequired(true).setMaxLength(32),
+    ),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder().setCustomId("categoryId").setLabel("Category Channel ID (blank = auto by name)").setStyle(TextInputStyle.Short).setValue(opt.categoryId ?? "").setRequired(false).setMaxLength(20),
+    ),
+  );
+
+  await interaction.showModal(modal);
+}
+
+export async function handleMenuEditModalSubmit(interaction: ModalSubmitInteraction) {
+  const value = interaction.customId.replace("menu_edit_modal_", "");
+  const label = interaction.fields.getTextInputValue("label").trim();
+  const description = interaction.fields.getTextInputValue("description").trim();
+  const emoji = interaction.fields.getTextInputValue("emoji").trim();
+  const categoryIdRaw = interaction.fields.getTextInputValue("categoryId").trim();
+  const categoryId = categoryIdRaw || null;
+
+  updateMenuOption(value, { label, description, emoji, categoryId });
+
+  await interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("✅ Menu Option Updated")
+        .setColor(Colors.Green)
+        .addFields(
+          { name: "Label", value: label, inline: true },
+          { name: "Emoji", value: emoji, inline: true },
+          { name: "Description", value: description, inline: false },
+          { name: "Category ID", value: categoryId ?? "*Auto (matched by name)*", inline: false },
+        )
+        .setTimestamp(),
+    ],
+    ephemeral: true,
+  });
 }
 
 export async function handleBlock(message: Message) {

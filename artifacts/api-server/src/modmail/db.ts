@@ -26,11 +26,28 @@ interface PendingSelection {
   createdAt: number;
 }
 
+export interface MenuOptionConfig {
+  value: string;
+  label: string;
+  description: string;
+  emoji: string;
+  categoryId: string | null;
+}
+
+const DEFAULT_MENU_OPTIONS: MenuOptionConfig[] = [
+  { value: "Modmail",      label: "General Support", description: "Talk to staff about anything",      emoji: "📬", categoryId: null },
+  { value: "Partnerships", label: "Partnership",     description: "Propose a partnership with us",    emoji: "🤝", categoryId: null },
+  { value: "Ping on Join", label: "Ping on Join",    description: "Request a ping-on-join setup",     emoji: "📥", categoryId: null },
+  { value: "Appeals",      label: "Appeal",          description: "Appeal a punishment or ban",       emoji: "⚖️", categoryId: null },
+  { value: "Applications", label: "Apply",           description: "Apply for a staff or other role",  emoji: "📝", categoryId: null },
+];
+
 interface DB {
   threads: Record<string, Thread>;
   snippets: Record<string, Snippet>;
   pending: Record<string, PendingSelection>;
   blocklist: string[];
+  menuOptions: MenuOptionConfig[];
 }
 
 function ensureDir() {
@@ -39,14 +56,15 @@ function ensureDir() {
 
 function load(): DB {
   ensureDir();
-  if (!fs.existsSync(DB_FILE)) return { threads: {}, snippets: {}, pending: {}, blocklist: [] };
+  if (!fs.existsSync(DB_FILE)) return { threads: {}, snippets: {}, pending: {}, blocklist: [], menuOptions: [...DEFAULT_MENU_OPTIONS] };
   try {
     const raw = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")) as DB;
     if (!raw.pending) raw.pending = {};
     if (!raw.blocklist) raw.blocklist = [];
+    if (!raw.menuOptions || raw.menuOptions.length === 0) raw.menuOptions = [...DEFAULT_MENU_OPTIONS];
     return raw;
   } catch {
-    return { threads: {}, snippets: {}, pending: {}, blocklist: [] };
+    return { threads: {}, snippets: {}, pending: {}, blocklist: [], menuOptions: [...DEFAULT_MENU_OPTIONS] };
   }
 }
 
@@ -129,6 +147,21 @@ export function clearPending(userId: string) {
   const db = load();
   delete db.pending[userId];
   save(db);
+}
+
+// ── Menu Options ──────────────────────────────────────────────────────────────
+
+export function getMenuOptions(): MenuOptionConfig[] {
+  return load().menuOptions;
+}
+
+export function updateMenuOption(value: string, updates: Partial<MenuOptionConfig>) {
+  const db = load();
+  const idx = db.menuOptions.findIndex((o) => o.value === value);
+  if (idx !== -1) {
+    db.menuOptions[idx] = { ...db.menuOptions[idx], ...updates };
+    save(db);
+  }
 }
 
 // ── Blocklist ─────────────────────────────────────────────────────────────────
