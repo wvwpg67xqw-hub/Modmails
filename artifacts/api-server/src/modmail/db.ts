@@ -30,6 +30,7 @@ interface DB {
   threads: Record<string, Thread>;
   snippets: Record<string, Snippet>;
   pending: Record<string, PendingSelection>;
+  blocklist: string[];
 }
 
 function ensureDir() {
@@ -38,13 +39,14 @@ function ensureDir() {
 
 function load(): DB {
   ensureDir();
-  if (!fs.existsSync(DB_FILE)) return { threads: {}, snippets: {}, pending: {} };
+  if (!fs.existsSync(DB_FILE)) return { threads: {}, snippets: {}, pending: {}, blocklist: [] };
   try {
     const raw = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")) as DB;
     if (!raw.pending) raw.pending = {};
+    if (!raw.blocklist) raw.blocklist = [];
     return raw;
   } catch {
-    return { threads: {}, snippets: {}, pending: {} };
+    return { threads: {}, snippets: {}, pending: {}, blocklist: [] };
   }
 }
 
@@ -127,6 +129,30 @@ export function clearPending(userId: string) {
   const db = load();
   delete db.pending[userId];
   save(db);
+}
+
+// ── Blocklist ─────────────────────────────────────────────────────────────────
+
+export function isBlocked(userId: string): boolean {
+  const db = load();
+  return db.blocklist.includes(userId);
+}
+
+export function blockUser(userId: string) {
+  const db = load();
+  if (!db.blocklist.includes(userId)) {
+    db.blocklist.push(userId);
+    save(db);
+  }
+}
+
+export function unblockUser(userId: string): boolean {
+  const db = load();
+  const idx = db.blocklist.indexOf(userId);
+  if (idx === -1) return false;
+  db.blocklist.splice(idx, 1);
+  save(db);
+  return true;
 }
 
 // ── Snippets ──────────────────────────────────────────────────────────────────

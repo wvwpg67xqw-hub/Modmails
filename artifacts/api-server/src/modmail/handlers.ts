@@ -28,6 +28,9 @@ import {
   setPending,
   getPending,
   clearPending,
+  isBlocked,
+  blockUser,
+  unblockUser,
 } from "./db.js";
 import { CATEGORIES, MENU_OPTIONS } from "./categories.js";
 import { ensureCategories } from "./setup.js";
@@ -131,6 +134,8 @@ export async function openThread(
 
 export async function handleUserDM(client: Client, message: Message) {
   if (message.author.bot) return;
+
+  if (isBlocked(message.author.id)) return;
 
   const existingThread = getThreadByUser(message.author.id);
 
@@ -465,6 +470,60 @@ export async function handleSnippetUse(message: Message, snippetName: string) {
   await message.delete().catch(() => {});
 }
 
+export async function handleBlock(message: Message) {
+  const thread = getThreadByChannel(message.channel.id);
+  if (!thread) {
+    await message.reply("❌ This is not a modmail thread.");
+    return;
+  }
+
+  if (isBlocked(thread.userId)) {
+    await message.reply(`⚠️ **${thread.username}** is already blocked.`);
+    return;
+  }
+
+  blockUser(thread.userId);
+
+  const embed = new EmbedBuilder()
+    .setTitle("🚫 User Blocked")
+    .setDescription(`**${thread.username}** (\`${thread.userId}\`) has been blocked from sending modmail.`)
+    .setColor(Colors.Red)
+    .setTimestamp()
+    .setFooter({ text: `Blocked by ${message.author.tag}` });
+
+  await (message.channel as TextChannel).send({ embeds: [embed] });
+  await message.delete().catch(() => {});
+}
+
+export async function handleUnblock(message: Message) {
+  const target = message.content.replace(/^\.unblock\s*/i, "").trim();
+
+  if (!target) {
+    await message.reply("❌ Usage: `.unblock <user ID>`");
+    return;
+  }
+
+  const userId = target.replace(/\D/g, "");
+  if (!userId) {
+    await message.reply("❌ Please provide a valid user ID.");
+    return;
+  }
+
+  const removed = unblockUser(userId);
+
+  const embed = new EmbedBuilder()
+    .setColor(removed ? Colors.Green : Colors.Grey)
+    .setDescription(
+      removed
+        ? `✅ User \`${userId}\` has been unblocked and can now send modmail again.`
+        : `⚠️ User \`${userId}\` was not on the blocklist.`
+    )
+    .setTimestamp()
+    .setFooter({ text: `By ${message.author.tag}` });
+
+  await message.reply({ embeds: [embed] });
+}
+
 export async function handleEscalate(message: Message) {
   const thread = getThreadByChannel(message.channel.id);
   if (!thread) {
@@ -504,7 +563,7 @@ export async function handleHelp(message: Message) {
     .setColor(Colors.Blurple)
     .addFields(
       { name: "📬 Replying", value: "`.r <message>` — Reply to user\n`.ar <message>` — Anonymous reply" },
-      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread\n`.escalate` — Ping Bored of Directors" },
+      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread\n`.escalate` — Ping Bored of Directors\n`.block` — Block user from modmail\n`.unblock <user ID>` — Unblock a user" },
       { name: "📝 Snippets", value: "`.snippet add <name> <text>` — Create\n`.snippet remove <name>` — Delete\n`.snippet list` — List all\n`.<name>` — Send snippet to user" },
       { name: "📋 Saved Snippets", value: snippetLines },
       { name: "ℹ️ Categories", value: Object.values(CATEGORIES).join(", ") },
