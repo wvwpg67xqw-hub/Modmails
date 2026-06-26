@@ -465,6 +465,34 @@ export async function handleSnippetUse(message: Message, snippetName: string) {
   await message.delete().catch(() => {});
 }
 
+export async function handleEscalate(message: Message) {
+  const thread = getThreadByChannel(message.channel.id);
+  if (!thread) {
+    await message.reply("❌ This is not a modmail thread.");
+    return;
+  }
+
+  const BOD_ROLE_ID = "1519939477303197878";
+
+  const embed = new EmbedBuilder()
+    .setTitle("⚠️ Thread Escalated")
+    .setDescription(`This thread has been escalated by **${message.author.tag}** and requires Bored of Directors attention.`)
+    .setColor(Colors.Orange)
+    .setTimestamp()
+    .addFields(
+      { name: "Thread", value: `#${(message.channel as TextChannel).name}`, inline: true },
+      { name: "User", value: `${thread.username} (${thread.userId})`, inline: true },
+      { name: "Category", value: thread.category, inline: true },
+    );
+
+  await (message.channel as TextChannel).send({
+    content: `<@&${BOD_ROLE_ID}>`,
+    embeds: [embed],
+  });
+
+  await message.delete().catch(() => {});
+}
+
 export async function handleHelp(message: Message) {
   const snippets = listSnippets();
   const snippetLines = snippets.length > 0
@@ -476,7 +504,7 @@ export async function handleHelp(message: Message) {
     .setColor(Colors.Blurple)
     .addFields(
       { name: "📬 Replying", value: "`.r <message>` — Reply to user\n`.ar <message>` — Anonymous reply" },
-      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread" },
+      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread\n`.escalate` — Ping Bored of Directors" },
       { name: "📝 Snippets", value: "`.snippet add <name> <text>` — Create\n`.snippet remove <name>` — Delete\n`.snippet list` — List all\n`.<name>` — Send snippet to user" },
       { name: "📋 Saved Snippets", value: snippetLines },
       { name: "ℹ️ Categories", value: Object.values(CATEGORIES).join(", ") },

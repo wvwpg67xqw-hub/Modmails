@@ -20,6 +20,7 @@ import {
   handleSnippetList,
   handleSnippetUse,
   handleHelp,
+  handleEscalate,
   getStaffGuild,
 } from "./handlers.js";
 import { getSnippet } from "./db.js";
@@ -97,6 +98,7 @@ export function startBot() {
     if (lower.startsWith(".snippet add "))     { await handleSnippetAdd(message);    return; }
     if (lower.startsWith(".snippet remove "))  { await handleSnippetRemove(message); return; }
     if (lower === ".snippet list" || lower === ".snippet") { await handleSnippetList(message); return; }
+    if (lower === ".escalate")                 { await handleEscalate(message);      return; }
     if (lower === ".a" || lower === ".help")   { await handleHelp(message);          return; }
 
     // Snippet shortcut: .snippetname
