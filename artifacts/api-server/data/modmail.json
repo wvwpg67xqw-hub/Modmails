@@ -9,14 +9,18 @@
       "category": "Applications",
       "createdAt": 1782451540710,
       "subscribers": []
+    },
+    "1782452066990-b7p2if": {
+      "threadId": "1782452066990-b7p2if",
+      "channelId": "1519938875085160528",
+      "userId": "1387497456740339824",
+      "username": "reedrodeify",
+      "open": true,
+      "category": "Applications",
+      "createdAt": 1782452066990,
+      "subscribers": []
     }
   },
   "snippets": {},
-  "pending": {
-    "1387497456740339824": {
-      "menuMessageId": "1519938836040388780",
-      "initialMessage": "Sup",
-      "createdAt": 1782452057975
-    }
-  }
+  "pending": {}
 }
