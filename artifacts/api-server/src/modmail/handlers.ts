@@ -37,6 +37,7 @@ import {
   unblockUser,
   getMenuOptions,
   updateMenuOption,
+  addMenuOption,
 } from "./db.js";
 import { CATEGORIES } from "./categories.js";
 import { ensureCategories } from "./setup.js";
@@ -500,14 +501,21 @@ export async function handleMenuEdit(message: Message) {
   const opts = getMenuOptions();
   const select = new StringSelectMenuBuilder()
     .setCustomId("menu_edit_select")
-    .setPlaceholder("Choose an option to edit…")
-    .addOptions(opts.map((o) => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description })));
+    .setPlaceholder("Choose an option to edit, or add a new one…")
+    .addOptions([
+      ...opts.map((o) => ({ label: o.label, value: o.value, emoji: o.emoji, description: `Edit: ${o.description}` })),
+      { label: "➕ Add New Option", value: "__add_new__", description: "Add a brand new option to the user menu" },
+    ]);
 
   await message.reply({
     embeds: [
       new EmbedBuilder()
         .setTitle("🛠️ Edit Menu")
-        .setDescription("Select which menu option you want to edit. You can change the label, description, emoji, and the Discord category channel ID where threads go.")
+        .setDescription(
+          "**Current options:**\n" +
+          opts.map((o, i) => `${i + 1}. ${o.emoji} **${o.label}** — ${o.description}`).join("\n") +
+          "\n\nSelect an option to edit it, or choose **➕ Add New Option** to create one."
+        )
         .setColor(Colors.Blurple),
     ],
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)],
@@ -516,6 +524,31 @@ export async function handleMenuEdit(message: Message) {
 
 export async function handleMenuEditSelection(interaction: StringSelectMenuInteraction) {
   const value = interaction.values[0]!;
+
+  if (value === "__add_new__") {
+    const modal = new ModalBuilder()
+      .setCustomId("menu_edit_modal___add_new__")
+      .setTitle("Add New Menu Option");
+
+    modal.addComponents(
+      new ActionRowBuilder<TextInputBuilder>().addComponents(
+        new TextInputBuilder().setCustomId("label").setLabel("Label (shown to users)").setStyle(TextInputStyle.Short).setPlaceholder("e.g. Bug Report").setRequired(true).setMaxLength(100),
+      ),
+      new ActionRowBuilder<TextInputBuilder>().addComponents(
+        new TextInputBuilder().setCustomId("description").setLabel("Description (shown under label)").setStyle(TextInputStyle.Short).setPlaceholder("e.g. Report a bug or issue").setRequired(true).setMaxLength(100),
+      ),
+      new ActionRowBuilder<TextInputBuilder>().addComponents(
+        new TextInputBuilder().setCustomId("emoji").setLabel("Emoji (e.g. 🐛)").setStyle(TextInputStyle.Short).setPlaceholder("🐛").setRequired(true).setMaxLength(32),
+      ),
+      new ActionRowBuilder<TextInputBuilder>().addComponents(
+        new TextInputBuilder().setCustomId("categoryId").setLabel("Category Channel ID (blank = auto by name)").setStyle(TextInputStyle.Short).setRequired(false).setMaxLength(20),
+      ),
+    );
+
+    await interaction.showModal(modal);
+    return;
+  }
+
   const opts = getMenuOptions();
   const opt = opts.find((o) => o.value === value);
   if (!opt) { await interaction.reply({ content: "❌ Option not found.", ephemeral: true }); return; }
@@ -550,12 +583,19 @@ export async function handleMenuEditModalSubmit(interaction: ModalSubmitInteract
   const categoryIdRaw = interaction.fields.getTextInputValue("categoryId").trim();
   const categoryId = categoryIdRaw || null;
 
-  updateMenuOption(value, { label, description, emoji, categoryId });
+  const isNew = value === "__add_new__";
+
+  if (isNew) {
+    const slug = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || `option-${Date.now()}`;
+    addMenuOption({ value: slug, label, description, emoji, categoryId });
+  } else {
+    updateMenuOption(value, { label, description, emoji, categoryId });
+  }
 
   await interaction.reply({
     embeds: [
       new EmbedBuilder()
-        .setTitle("✅ Menu Option Updated")
+        .setTitle(isNew ? "✅ Menu Option Added" : "✅ Menu Option Updated")
         .setColor(Colors.Green)
         .addFields(
           { name: "Label", value: label, inline: true },

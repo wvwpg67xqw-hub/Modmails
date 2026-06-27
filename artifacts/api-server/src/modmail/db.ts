@@ -164,6 +164,12 @@ export function updateMenuOption(value: string, updates: Partial<MenuOptionConfi
   }
 }
 
+export function addMenuOption(option: MenuOptionConfig) {
+  const db = load();
+  db.menuOptions.push(option);
+  save(db);
+}
+
 // ── Blocklist ─────────────────────────────────────────────────────────────────
 
 export function isBlocked(userId: string): boolean {
