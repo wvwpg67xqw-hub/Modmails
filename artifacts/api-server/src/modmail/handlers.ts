@@ -143,7 +143,17 @@ export async function openThread(
 export async function handleUserDM(client: Client, message: Message) {
   if (message.author.bot) return;
 
-  if (isBlocked(message.author.id)) return;
+  if (isBlocked(message.author.id)) {
+    await message.author.send({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("🚫 You are blocked")
+          .setDescription("You have been blocked from contacting our modmail. If you believe this is a mistake, please reach out through another means.")
+          .setColor(Colors.Red),
+      ],
+    }).catch(() => {});
+    return;
+  }
 
   const existingThread = getThreadByUser(message.author.id);
 
@@ -704,7 +714,44 @@ export async function handleEscalate(message: Message) {
   await message.delete().catch(() => {});
 }
 
-export async function handleHelp(message: Message) {
+const COMMAND_DETAILS: Record<string, { title: string; usage: string; description: string }> = {
+  r:        { title: ".r",         usage: ".r <message>",                  description: "Reply to the user in the current thread. Your name and avatar are shown." },
+  ar:       { title: ".ar",        usage: ".ar <message>",                  description: "Anonymous reply. The user sees your role title (Ownership / Bored of Directors / Management) instead of your name." },
+  close:    { title: ".close",     usage: ".close",                         description: "Close the current thread, notify the user, and delete the channel after 5 seconds." },
+  sub:      { title: ".sub",       usage: ".sub",                           description: "Toggle ping notifications. When subscribed, you get pinged alongside the embed when the user sends a message." },
+  move:     { title: ".move",      usage: ".move <category | channel ID>",  description: "Move this thread to a different category. Use a category name or paste a raw Discord category channel ID." },
+  escalate: { title: ".escalate",  usage: ".escalate",                      description: "Ping the Bored of Directors role in this thread and post an escalation embed." },
+  block:    { title: ".block",     usage: ".block",                         description: "Block the user of this thread from sending modmail. They receive a blocked message and are silently ignored from then on." },
+  unblock:  { title: ".unblock",   usage: ".unblock <user ID>",             description: "Unblock a previously blocked user so they can contact modmail again." },
+  s:        { title: ".s",         usage: ".s <snippet name>",              description: "Preview a snippet's content in the staff channel without sending it to the user." },
+  snippet:  { title: ".snippet",   usage: ".snippet add|remove|list",       description: "Manage snippets.\n• `.snippet add <name> <text>` — create\n• `.snippet remove <name>` — delete\n• `.snippet list` — list all saved snippets" },
+  menu:     { title: ".menu edit", usage: ".menu edit",                     description: "Edit or add options on the user-facing category select menu. Opens a dropdown then a modal." },
+  a:        { title: ".a / .help", usage: ".a [command]",                   description: "Show all commands, or use `.a <command>` to see details — e.g. `.a block`." },
+  help:     { title: ".a / .help", usage: ".a [command]",                   description: "Show all commands, or use `.a <command>` to see details — e.g. `.a block`." },
+};
+
+export async function handleHelp(message: Message, commandName?: string) {
+  if (commandName) {
+    const key = commandName.replace(/^\./, "").toLowerCase();
+    const cmd = COMMAND_DETAILS[key];
+    if (!cmd) {
+      await message.reply(`❌ Unknown command \`${commandName}\`. Use \`.a\` to see all commands.`);
+      return;
+    }
+    await message.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle(cmd.title)
+          .setColor(Colors.Blurple)
+          .addFields(
+            { name: "Usage", value: `\`${cmd.usage}\`` },
+            { name: "Description", value: cmd.description },
+          ),
+      ],
+    });
+    return;
+  }
+
   const snippets = listSnippets();
   const snippetLines = snippets.length > 0
     ? snippets.map((s) => `**.${s.name}** — ${s.content}`).join("\n")
@@ -715,10 +762,11 @@ export async function handleHelp(message: Message) {
     .setColor(Colors.Blurple)
     .addFields(
       { name: "📬 Replying", value: "`.r <message>` — Reply to user\n`.ar <message>` — Anonymous reply" },
-      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread\n`.escalate` — Ping Bored of Directors\n`.block` — Block user from modmail\n`.unblock <user ID>` — Unblock a user" },
-      { name: "📝 Snippets", value: "`.snippet add <name> <text>` — Create\n`.snippet remove <name>` — Delete\n`.snippet list` — List all\n`.<name>` — Send snippet to user" },
+      { name: "🔧 Thread Management", value: "`.close` — Close thread\n`.sub` — Toggle subscription pings\n`.move <category>` — Move thread\n`.escalate` — Ping Bored of Directors\n`.block` — Block user\n`.unblock <user ID>` — Unblock a user" },
+      { name: "📝 Snippets", value: "`.snippet add <name> <text>` — Create\n`.snippet remove <name>` — Delete\n`.snippet list` — List all\n`.s <name>` — Preview a snippet\n`.<name>` — Send snippet to user" },
       { name: "📋 Saved Snippets", value: snippetLines },
       { name: "ℹ️ Categories", value: Object.values(CATEGORIES).join(", ") },
+      { name: "💡 Tip", value: "Use `.a <command>` for details on any command — e.g. `.a block`" },
     )
     .setFooter({ text: "Modmail Bot" });
 

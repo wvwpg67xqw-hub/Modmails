@@ -117,7 +117,12 @@ export function startBot() {
     if (lower.startsWith(".unblock"))          { await handleUnblock(message);       return; }
     if (lower === ".escalate")                 { await handleEscalate(message);      return; }
     if (lower === ".menu edit")                { await handleMenuEdit(message);      return; }
-    if (lower === ".a" || lower === ".help")   { await handleHelp(message);          return; }
+    if (lower === ".a" || lower === ".help")   { await handleHelp(message);           return; }
+    if (lower.startsWith(".a ") || lower.startsWith(".help ")) {
+      const arg = content.trim().split(/\s+/).slice(1).join(" ");
+      await handleHelp(message, arg);
+      return;
+    }
 
     // Snippet shortcut: .snippetname
     if (lower.startsWith(".") && !lower.startsWith("..")) {
