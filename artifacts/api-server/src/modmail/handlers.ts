@@ -165,12 +165,11 @@ export async function handleUserDM(client: Client, message: Message) {
       embed.addFields({ name: "Attachments", value: message.attachments.map((a) => a.url).join("\n") });
     }
 
-    await channel.send({ embeds: [embed] });
+    const mentions = existingThread.subscribers.length > 0
+      ? existingThread.subscribers.map((id) => `<@${id}>`).join(" ")
+      : undefined;
 
-    if (existingThread.subscribers.length > 0) {
-      const mentions = existingThread.subscribers.map((id) => `<@${id}>`).join(" ");
-      await channel.send(`${mentions} — new reply from user`);
-    }
+    await channel.send({ content: mentions, embeds: [embed] });
 
     await message.react("✅").catch(() => {});
     return;
@@ -444,6 +443,20 @@ export async function handleSnippetRemove(message: Message) {
   }
   const removed = removeSnippet(name);
   await message.reply(removed ? `✅ Snippet \`${name}\` removed.` : `❌ No snippet named \`${name}\`.`);
+}
+
+export async function handleSnippetView(message: Message, name: string) {
+  const snippet = getSnippet(name);
+  if (!snippet) {
+    await message.reply(`❌ No snippet named \`${name}\`.`);
+    return;
+  }
+  const embed = new EmbedBuilder()
+    .setTitle(`📋 Snippet: ${snippet.name}`)
+    .setDescription(snippet.content)
+    .setColor(Colors.Blurple)
+    .setFooter({ text: `Use .${snippet.name} to send this to the user` });
+  await message.reply({ embeds: [embed] });
 }
 
 export async function handleSnippetList(message: Message) {

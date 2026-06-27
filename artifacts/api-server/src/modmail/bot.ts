@@ -18,6 +18,7 @@ import {
   handleSnippetAdd,
   handleSnippetRemove,
   handleSnippetList,
+  handleSnippetView,
   handleSnippetUse,
   handleHelp,
   handleEscalate,
@@ -111,6 +112,7 @@ export function startBot() {
     if (lower.startsWith(".snippet add "))     { await handleSnippetAdd(message);    return; }
     if (lower.startsWith(".snippet remove "))  { await handleSnippetRemove(message); return; }
     if (lower === ".snippet list" || lower === ".snippet") { await handleSnippetList(message); return; }
+    if (lower.startsWith(".s "))               { await handleSnippetView(message, lower.slice(3).trim()); return; }
     if (lower === ".block")                    { await handleBlock(message);         return; }
     if (lower.startsWith(".unblock"))          { await handleUnblock(message);       return; }
     if (lower === ".escalate")                 { await handleEscalate(message);      return; }
