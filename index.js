@@ -26,7 +26,7 @@ run("corepack prepare pnpm@latest --activate");
 run("pnpm install --frozen-lockfile", {
   env: {
     ...process.env,
-    NODE_OPTIONS: "--max-old-space-size=512",
+    NODE_OPTIONS: "--max-old-space-size=384",
   },
 });
 

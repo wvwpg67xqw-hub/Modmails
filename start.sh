@@ -17,7 +17,7 @@ if ! command -v pnpm &> /dev/null; then
 fi
 
 # ── Install dependencies (with OOM + timeout resilience) ──────────────────────
-export NODE_OPTIONS="--max-old-space-size=512"
+export NODE_OPTIONS="--max-old-space-size=384"
 pnpm install --frozen-lockfile
 
 # ── Build the bot ──────────────────────────────────────────────────────────────
