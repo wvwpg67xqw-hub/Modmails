@@ -1,0 +1,100 @@
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelper-module-transforms error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelper-module-imports error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fcore error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelpers error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fplugin-transform-react-jsx-self error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fparser error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fplugin-transform-react-jsx-source error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fruntime error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Ftemplate error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Ftraverse error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Ftypes error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fbuilders error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fcollection error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fformatters error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Futil error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Frest error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fws error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@esbuild%2Flinux-x64 error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@floating-ui%2Fdom error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@hookform%2Fresolvers error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fangular error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Faxios error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fcore error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fquery error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fswr error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-accordion error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-alert-dialog error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-arrow error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-aspect-ratio error (23). Will retry in 10 seconds. 2 retries left.
+Progress: resolved [96m497[39m, reused [96m96[39m, downloaded [96m145[39m, added [96m12[39m
+[45A[0JScope: all 9 workspace projects
+[36m?[39m Verifying lockfile against supply-chain policies (499 entries)...
+Lockfile is up to date, resolution step is skipped
+Packages: [32m+497[39m
+
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m Request took 45752ms: https://registry.npmjs.org/@orval%2Fhono
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m Request took 46752ms: https://registry.npmjs.org/@babel%2Fhelper-validator-identifier
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m Request took 49286ms: https://registry.npmjs.org/@radix-ui%2Fnumber
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m Request took 54660ms: https://registry.npmjs.org/@jridgewell%2Ftrace-mapping
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m Request took 54899ms: https://registry.npmjs.org/@radix-ui%2Fprimitive
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m 7 other warnings
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fcompat-data error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fcode-frame error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fgenerator error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelper-compilation-targets error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelper-module-transforms error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelper-module-imports error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fcore error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fhelpers error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fplugin-transform-react-jsx-self error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fparser error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fplugin-transform-react-jsx-source error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Fruntime error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Ftemplate error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Ftraverse error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@babel%2Ftypes error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fbuilders error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fcollection error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fformatters error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Futil error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Frest error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@discordjs%2Fws error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@esbuild%2Flinux-x64 error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@floating-ui%2Fdom error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@hookform%2Fresolvers error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fangular error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Faxios error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fcore error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fquery error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@orval%2Fswr error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-accordion error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-alert-dialog error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-arrow error (23). Will retry in 10 seconds. 2 retries left.
+[43m[33m[[39m[49m[43m[30mWARN[39m[49m[43m[33m][39m[49m GET https://registry.npmjs.org/@radix-ui%2Freact-aspect-ratio error (23). Will retry in 10 seconds. 2 retries left.
+Progress: resolved [96m497[39m, reused [96m96[39m, downloaded [96m152[39m, added [96m16[39m
+Killed
+node:child_process:991
+    throw err;
+    ^
+
+Error: Command failed: pnpm install --frozen-lockfile
+[90m    at genericNodeError (node:internal/errors:983:15)[39m
+[90m    at wrappedFn (node:internal/errors:537:14)[39m
+[90m    at checkExecSyncError (node:child_process:916:11)[39m
+[90m    at execSync (node:child_process:988:15)[39m
+    at run [90m(/home/container/[39mindex.js:7:3[90m)[39m
+    at Object.<anonymous> [90m(/home/container/[39mindex.js:26:1[90m)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1781:14)[39m
+[90m    at Object..js (node:internal/modules/cjs/loader:1913:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1505:32)[39m
+[90m    at Function._load (node:internal/modules/cjs/loader:1309:12)[39m {
+  status: [33m137[39m,
+  signal: [1mnull[22m,
+  output: [ [1mnull[22m, [1mnull[22m, [1mnull[22m ],
+  pid: [33m92[39m,
+  stdout: [1mnull[22m,
+  stderr: [1mnull[22m
+}
+
+Node.js v22.23.0
