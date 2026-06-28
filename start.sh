@@ -16,7 +16,8 @@ if ! command -v pnpm &> /dev/null; then
   npm install -g pnpm
 fi
 
-# ── Install dependencies ───────────────────────────────────────────────────────
+# ── Install dependencies (with OOM + timeout resilience) ──────────────────────
+export NODE_OPTIONS="--max-old-space-size=512"
 pnpm install --frozen-lockfile
 
 # ── Build the bot ──────────────────────────────────────────────────────────────

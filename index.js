@@ -2,9 +2,9 @@ const { execSync, spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
-function run(cmd) {
+function run(cmd, opts = {}) {
   console.log(`> ${cmd}`);
-  execSync(cmd, { stdio: "inherit" });
+  execSync(cmd, { stdio: "inherit", ...opts });
 }
 
 // ----------------------
@@ -21,9 +21,14 @@ run("corepack enable");
 run("corepack prepare pnpm@latest --activate");
 
 // ----------------------
-// Install dependencies
+// Install dependencies (with OOM + timeout resilience)
 // ----------------------
-run("pnpm install --frozen-lockfile");
+run("pnpm install --frozen-lockfile", {
+  env: {
+    ...process.env,
+    NODE_OPTIONS: "--max-old-space-size=512",
+  },
+});
 
 // ----------------------
 // Build workspace
@@ -53,10 +58,9 @@ console.log(`> Starting: node ${entry}`);
 
 const child = spawn("node", [entry], {
   stdio: "inherit",
-  env: process.env
+  env: process.env,
 });
 
-// Clean exit propagation
 child.on("exit", (code) => process.exit(code ?? 0));
 child.on("error", (err) => {
   console.error("Failed to start process:", err);
